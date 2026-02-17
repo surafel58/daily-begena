@@ -1,7 +1,10 @@
 import { useEffect } from 'react';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { StyleSheet } from 'react-native';
 import { getDatabase } from '../src/shared/db';
+import { colors } from '../src/shared/ui/theme';
 
 export default function RootLayout() {
   useEffect(() => {
@@ -9,29 +12,44 @@ export default function RootLayout() {
   }, []);
 
   return (
-    <>
+    <GestureHandlerRootView style={styles.root}>
       <StatusBar style="light" />
       <Stack
         screenOptions={{
-          headerStyle: { backgroundColor: '#1a1a2e' },
-          headerTintColor: '#e0e0e0',
-          headerTitleStyle: { fontWeight: 'bold' },
-          contentStyle: { backgroundColor: '#16213e' },
+          headerShown: false,
+          contentStyle: { backgroundColor: colors.bg },
+          animation: 'fade',
         }}
       >
+        <Stack.Screen name="(tabs)" />
         <Stack.Screen
-          name="(tabs)"
-          options={{ headerShown: false }}
+          name="session/index"
+          options={{ animation: 'slide_from_bottom' }}
+        />
+        <Stack.Screen
+          name="session/tune"
+          options={{ animation: 'fade' }}
         />
         <Stack.Screen
           name="session/drill"
-          options={{ title: 'Finger Drill' }}
+          options={{ animation: 'fade' }}
+        />
+        <Stack.Screen
+          name="session/ear-check"
+          options={{ animation: 'fade' }}
         />
         <Stack.Screen
           name="session/results"
-          options={{ title: 'Results' }}
+          options={{ animation: 'slide_from_bottom' }}
         />
       </Stack>
-    </>
+    </GestureHandlerRootView>
   );
 }
+
+const styles = StyleSheet.create({
+  root: {
+    flex: 1,
+    backgroundColor: colors.bg,
+  },
+});

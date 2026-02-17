@@ -1,10 +1,25 @@
 import { Tabs } from 'expo-router';
-import { Text } from 'react-native';
+import { StyleSheet, View } from 'react-native';
+import { colors } from '../../src/shared/ui/theme';
 
-function TabIcon({ label, focused }: { label: string; focused: boolean }) {
+function TabIcon({ icon, focused }: { icon: string; focused: boolean }) {
   return (
-    <Text style={{ fontSize: 20, opacity: focused ? 1 : 0.5 }}>
-      {label}
+    <View style={[styles.iconContainer, focused && styles.iconActive]}>
+      <View style={styles.iconText}>
+        <IconChar char={icon} focused={focused} />
+      </View>
+    </View>
+  );
+}
+
+function IconChar({ char, focused }: { char: string; focused: boolean }) {
+  const { Text } = require('react-native');
+  return (
+    <Text style={{
+      fontSize: 22,
+      color: focused ? colors.goldBright : colors.textSecondary,
+    }}>
+      {char}
     </Text>
   );
 }
@@ -13,44 +28,74 @@ export default function TabLayout() {
   return (
     <Tabs
       screenOptions={{
-        tabBarStyle: {
-          backgroundColor: '#1a1a2e',
-          borderTopColor: '#2a2a4e',
-        },
-        tabBarActiveTintColor: '#c9a84c',
-        tabBarInactiveTintColor: '#666',
-        headerStyle: { backgroundColor: '#1a1a2e' },
-        headerTintColor: '#e0e0e0',
+        tabBarStyle: styles.tabBar,
+        tabBarActiveTintColor: colors.goldBright,
+        tabBarInactiveTintColor: colors.textSecondary,
+        tabBarLabelStyle: styles.tabLabel,
+        headerStyle: styles.header,
+        headerTintColor: colors.textPrimary,
         headerTitleStyle: { fontWeight: 'bold' },
+        headerShown: false,
       }}
     >
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Practice',
+          title: 'Home',
           tabBarIcon: ({ focused }) => (
-            <TabIcon label="♪" focused={focused} />
+            <TabIcon icon="⌂" focused={focused} />
           ),
         }}
       />
       <Tabs.Screen
-        name="progress"
+        name="drills"
         options={{
-          title: 'Progress',
+          title: 'Drills',
           tabBarIcon: ({ focused }) => (
-            <TabIcon label="▲" focused={focused} />
+            <TabIcon icon="♪" focused={focused} />
           ),
         }}
       />
       <Tabs.Screen
-        name="settings"
+        name="profile"
         options={{
-          title: 'Settings',
+          title: 'Profile',
           tabBarIcon: ({ focused }) => (
-            <TabIcon label="⚙" focused={focused} />
+            <TabIcon icon="◉" focused={focused} />
           ),
         }}
       />
     </Tabs>
   );
 }
+
+const styles = StyleSheet.create({
+  tabBar: {
+    backgroundColor: colors.surface,
+    borderTopColor: colors.surfaceLight,
+    borderTopWidth: 1,
+    height: 64,
+    paddingBottom: 8,
+    paddingTop: 8,
+  },
+  tabLabel: {
+    fontSize: 11,
+    fontWeight: '600',
+  },
+  header: {
+    backgroundColor: colors.bg,
+  },
+  iconContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: 32,
+    height: 32,
+  },
+  iconActive: {
+    // Could add a subtle glow effect here
+  },
+  iconText: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+});

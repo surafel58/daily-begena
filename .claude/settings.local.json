@@ -7,7 +7,9 @@
       "Bash(npx expo install:*)",
       "Bash(npm install:*)",
       "Bash(npx tsc:*)",
-      "Bash(npx expo:*)"
+      "Bash(npx expo:*)",
+      "WebSearch",
+      "WebFetch(domain:play.google.com)"
     ]
   }
 }
