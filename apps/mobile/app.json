@@ -1,0 +1,45 @@
+{
+  "expo": {
+    "name": "Daily Begena",
+    "slug": "daily-begena",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "scheme": "daily-begena",
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#1a1a2e"
+    },
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.dailybegena.app",
+      "infoPlist": {
+        "NSMicrophoneUsageDescription": "Daily Begena needs microphone access to record your practice sessions and tune your instrument."
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#1a1a2e"
+      },
+      "edgeToEdgeEnabled": true,
+      "package": "com.dailybegena.app",
+      "permissions": [
+        "RECORD_AUDIO"
+      ]
+    },
+    "plugins": [
+      "expo-router",
+      "expo-sqlite",
+      [
+        "expo-av",
+        {
+          "microphonePermission": "Daily Begena needs microphone access to record your practice sessions and tune your instrument."
+        }
+      ]
+    ]
+  }
+}
