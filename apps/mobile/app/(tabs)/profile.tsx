@@ -76,7 +76,7 @@ const styles = StyleSheet.create({
   },
   content: {
     paddingHorizontal: spacing.xl,
-    paddingBottom: spacing['4xl'],
+    paddingBottom: 100,
   },
   title: {
     ...typography.title,

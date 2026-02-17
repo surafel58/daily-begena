@@ -1,26 +1,19 @@
 import { Tabs } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
-import { colors } from '../../src/shared/ui/theme';
+import { Ionicons } from '@expo/vector-icons';
+import { colors, spacing } from '../../src/shared/ui/theme';
 
-function TabIcon({ icon, focused }: { icon: string; focused: boolean }) {
+const TAB_MARGIN = spacing.xl; // 20px — matches dashboard content edges
+
+function TabIcon({ name, focused }: { name: keyof typeof Ionicons.glyphMap; focused: boolean }) {
   return (
-    <View style={[styles.iconContainer, focused && styles.iconActive]}>
-      <View style={styles.iconText}>
-        <IconChar char={icon} focused={focused} />
-      </View>
+    <View style={styles.iconContainer}>
+      <Ionicons
+        name={name}
+        size={22}
+        color={focused ? colors.goldBright : colors.textSecondary}
+      />
     </View>
-  );
-}
-
-function IconChar({ char, focused }: { char: string; focused: boolean }) {
-  const { Text } = require('react-native');
-  return (
-    <Text style={{
-      fontSize: 22,
-      color: focused ? colors.goldBright : colors.textSecondary,
-    }}>
-      {char}
-    </Text>
   );
 }
 
@@ -32,36 +25,34 @@ export default function TabLayout() {
         tabBarActiveTintColor: colors.goldBright,
         tabBarInactiveTintColor: colors.textSecondary,
         tabBarLabelStyle: styles.tabLabel,
-        headerStyle: styles.header,
-        headerTintColor: colors.textPrimary,
-        headerTitleStyle: { fontWeight: 'bold' },
         headerShown: false,
+        tabBarItemStyle: styles.tabBarItem,
       }}
     >
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Home',
+          title: 'HOME',
           tabBarIcon: ({ focused }) => (
-            <TabIcon icon="⌂" focused={focused} />
+            <TabIcon name={focused ? 'home' : 'home-outline'} focused={focused} />
           ),
         }}
       />
       <Tabs.Screen
         name="drills"
         options={{
-          title: 'Drills',
+          title: 'DRILLS',
           tabBarIcon: ({ focused }) => (
-            <TabIcon icon="♪" focused={focused} />
+            <TabIcon name={focused ? 'musical-notes' : 'musical-notes-outline'} focused={focused} />
           ),
         }}
       />
       <Tabs.Screen
         name="profile"
         options={{
-          title: 'Profile',
+          title: 'PROFILE',
           tabBarIcon: ({ focused }) => (
-            <TabIcon icon="◉" focused={focused} />
+            <TabIcon name={focused ? 'person' : 'person-outline'} focused={focused} />
           ),
         }}
       />
@@ -71,31 +62,42 @@ export default function TabLayout() {
 
 const styles = StyleSheet.create({
   tabBar: {
-    backgroundColor: colors.surface,
-    borderTopColor: colors.surfaceLight,
-    borderTopWidth: 1,
+    position: 'absolute',
+    bottom: 16,
+    marginHorizontal: TAB_MARGIN,
     height: 64,
-    paddingBottom: 8,
+    borderRadius: 32,
+    backgroundColor: colors.surface,
+    borderTopWidth: 0,
+    borderTopColor: 'transparent',
+    borderWidth: 1,
+    borderColor: colors.surfaceLight,
+    overflow: 'hidden',
+    paddingBottom: 0,
+    paddingTop: 0,
+    justifyContent: 'center',
+    elevation: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 12,
+  },
+  tabBarItem: {
+    justifyContent: 'center',
+    alignItems: 'center',
     paddingTop: 8,
+    paddingBottom: 0,
+    height: 64,
   },
   tabLabel: {
-    fontSize: 11,
+    fontSize: 10,
     fontWeight: '600',
-  },
-  header: {
-    backgroundColor: colors.bg,
+    letterSpacing: 0.5,
   },
   iconContainer: {
     alignItems: 'center',
     justifyContent: 'center',
     width: 32,
     height: 32,
-  },
-  iconActive: {
-    // Could add a subtle glow effect here
-  },
-  iconText: {
-    alignItems: 'center',
-    justifyContent: 'center',
   },
 });

@@ -13,18 +13,11 @@ export default function DashboardScreen() {
   const todayDuration = '10 Minutes';
   const sessionCompleted = false;
 
-  const getGreeting = () => {
-    const hour = new Date().getHours();
-    if (hour < 12) return 'Good Morning';
-    if (hour < 17) return 'Good Afternoon';
-    return 'Good Evening';
-  };
-
   return (
-    <View style={[styles.container, { paddingTop: insets.top + spacing.lg }]}>
+    <View style={[styles.container, { paddingTop: insets.top + spacing.lg, paddingBottom: insets.bottom + 96 }]}>
       {/* Top Bar */}
       <View style={styles.topBar}>
-        <Text style={styles.greeting}>{getGreeting()}</Text>
+        <Text style={styles.appTitle}>Daily Begena</Text>
         <View style={styles.streakBadge}>
           <Text style={styles.flameIcon}>🔥</Text>
           <Text style={styles.streakText}>{streak} Days</Text>
@@ -35,13 +28,30 @@ export default function DashboardScreen() {
       <View style={styles.heroArea}>
         {!sessionCompleted ? (
           <Card onPress={() => router.push('/session')} style={styles.heroCard}>
-            <Text style={styles.heroTitle}>Today's Drill</Text>
-            <Text style={styles.heroSubtitle}>
-              Strings {todayStrings} · {todayDuration}
+            {/* Pill Badge */}
+            <View style={styles.pillRow}>
+              <View style={styles.pill}>
+                <View style={styles.pillDot} />
+                <Text style={styles.pillText}>TODAY'S DRILL</Text>
+              </View>
+            </View>
+
+            {/* Strings Info */}
+            <View style={styles.stringsInfo}>
+              <Text style={styles.stringsLabel}>Strings</Text>
+              <Text style={styles.stringsValue}>{todayStrings}</Text>
+              <Text style={styles.durationText}>{todayDuration}</Text>
+            </View>
+
+            {/* Motivational Text */}
+            <Text style={styles.motivationText}>
+              Focus on consistent rhythmic plucking of the outer strings.
             </Text>
+
+            {/* Start Button */}
             <View style={styles.heroButtonContainer}>
               <Button
-                label="Start Practice"
+                label="▶  START PRACTICE"
                 onPress={() => router.push('/session')}
                 variant="primary"
                 style={styles.heroButton}
@@ -50,10 +60,14 @@ export default function DashboardScreen() {
           </Card>
         ) : (
           <Card style={styles.heroCard} pressable={false}>
-            <Text style={styles.heroTitle}>Session Complete</Text>
-            <Text style={styles.heroSubtitle}>
-              Great work today!
-            </Text>
+            <View style={styles.pillRow}>
+              <View style={styles.pill}>
+                <View style={[styles.pillDot, { backgroundColor: colors.success }]} />
+                <Text style={styles.pillText}>COMPLETED</Text>
+              </View>
+            </View>
+            <Text style={styles.completeTitle}>Session Complete</Text>
+            <Text style={styles.completeSubtitle}>Great work today!</Text>
             <View style={styles.scoreRow}>
               <View style={styles.scoreStat}>
                 <Text style={styles.scoreValue}>85%</Text>
@@ -66,18 +80,30 @@ export default function DashboardScreen() {
             </View>
           </Card>
         )}
+
       </View>
 
-      {/* Tuner Shortcut */}
-      <View style={styles.bottomArea}>
-        <Pressable
-          style={styles.tunerButton}
-          onPress={() => router.push('/session/tune')}
-        >
-          <Text style={styles.tunerIcon}>🎵</Text>
-          <Text style={styles.tunerLabel}>Tuner</Text>
-        </Pressable>
-      </View>
+      {/* Tuner Card */}
+      <Pressable onPress={() => router.push('/session/tune')}>
+        <Card style={styles.tunerCard} pressable={false}>
+          <View style={styles.tunerRow}>
+            <View style={styles.tunerIconContainer}>
+              <View style={styles.waveformIcon}>
+                <View style={[styles.waveBar, { height: 5 }]} />
+                <View style={[styles.waveBar, { height: 14 }]} />
+                <View style={[styles.waveBar, { height: 24 }]} />
+                <View style={[styles.waveBar, { height: 14 }]} />
+                <View style={[styles.waveBar, { height: 5 }]} />
+              </View>
+            </View>
+            <View style={styles.tunerInfo}>
+              <Text style={styles.tunerTitle}>Tuner</Text>
+              <Text style={styles.tunerSubtitle}>INSTRUMENT ALIGNMENT</Text>
+            </View>
+            <Text style={styles.tunerArrow}>›</Text>
+          </View>
+        </Card>
+      </Pressable>
     </View>
   );
 }
@@ -92,22 +118,26 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: spacing['3xl'],
+    marginBottom: spacing['2xl'],
   },
-  greeting: {
-    ...typography.subtitle,
+  appTitle: {
+    ...typography.title,
     color: colors.textPrimary,
   },
   streakBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.xs,
+    backgroundColor: colors.surface,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderRadius: 9999,
   },
   flameIcon: {
-    fontSize: 20,
+    fontSize: 16,
   },
   streakText: {
-    ...typography.body,
+    ...typography.caption,
     color: colors.goldBright,
     fontWeight: 'bold',
   },
@@ -116,29 +146,89 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   heroCard: {
-    paddingVertical: spacing['4xl'],
-    paddingHorizontal: spacing['3xl'],
+    paddingVertical: spacing['3xl'],
+    paddingHorizontal: spacing['2xl'],
   },
-  heroTitle: {
-    ...typography.title,
-    color: colors.goldMuted,
-    marginBottom: spacing.sm,
+  pillRow: {
+    alignItems: 'center',
+    marginBottom: spacing['2xl'],
   },
-  heroSubtitle: {
+  pill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    backgroundColor: colors.surfaceLight,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs + 2,
+    borderRadius: 9999,
+  },
+  pillDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: colors.goldBright,
+  },
+  pillText: {
+    ...typography.small,
+    color: colors.textSecondary,
+    letterSpacing: 1.5,
+    fontWeight: '600',
+  },
+  stringsInfo: {
+    alignItems: 'center',
+    marginBottom: spacing.xl,
+  },
+  stringsLabel: {
     ...typography.body,
     color: colors.textSecondary,
-    marginBottom: spacing['3xl'],
+    marginBottom: spacing.xs,
+  },
+  stringsValue: {
+    fontSize: 48,
+    fontWeight: 'bold',
+    color: colors.textPrimary,
+    letterSpacing: 2,
+  },
+  durationText: {
+    ...typography.caption,
+    color: colors.textSecondary,
+    marginTop: spacing.sm,
+  },
+  motivationText: {
+    ...typography.caption,
+    color: colors.textSecondary,
+    textAlign: 'center',
+    lineHeight: 20,
+    marginBottom: spacing['2xl'],
+    paddingHorizontal: spacing.lg,
   },
   heroButtonContainer: {
     alignItems: 'center',
   },
   heroButton: {
     width: '100%',
+    shadowColor: colors.goldMuted,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.6,
+    shadowRadius: 20,
+    elevation: 12,
+  },
+  completeTitle: {
+    ...typography.title,
+    color: colors.goldMuted,
+    textAlign: 'center',
+    marginBottom: spacing.sm,
+  },
+  completeSubtitle: {
+    ...typography.body,
+    color: colors.textSecondary,
+    textAlign: 'center',
+    marginBottom: spacing.xl,
   },
   scoreRow: {
     flexDirection: 'row',
     justifyContent: 'space-around',
-    marginTop: spacing.xl,
+    marginTop: spacing.lg,
   },
   scoreStat: {
     alignItems: 'center',
@@ -152,24 +242,51 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     marginTop: spacing.xs,
   },
-  bottomArea: {
-    alignItems: 'center',
-    paddingBottom: spacing['3xl'],
+  tunerCard: {
+    marginBottom: spacing.lg,
+    paddingVertical: spacing.xl,
+    paddingHorizontal: spacing.xl,
   },
-  tunerButton: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
-    backgroundColor: colors.teal,
+  tunerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.lg,
+  },
+  tunerIconContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: 'rgba(212, 163, 115, 0.15)',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  tunerIcon: {
-    fontSize: 24,
+  waveformIcon: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
   },
-  tunerLabel: {
+  waveBar: {
+    width: 3,
+    borderRadius: 1.5,
+    backgroundColor: colors.goldMuted,
+  },
+  tunerInfo: {
+    flex: 1,
+  },
+  tunerTitle: {
+    ...typography.body,
+    color: colors.goldMuted,
+    fontWeight: '600',
+  },
+  tunerSubtitle: {
     ...typography.small,
-    color: colors.textPrimary,
-    marginTop: 2,
+    color: colors.goldMuted,
+    letterSpacing: 1,
+    marginTop: spacing.xs,
+  },
+  tunerArrow: {
+    fontSize: 28,
+    color: colors.textSecondary,
+    fontWeight: '300',
   },
 });

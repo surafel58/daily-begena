@@ -1,6 +1,7 @@
 import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Card, colors, spacing, typography } from '../../src/shared/ui';
+import { Card, Button, colors, spacing, typography } from '../../src/shared/ui';
 
 // Placeholder data
 const weekDays = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
@@ -19,6 +20,7 @@ const bandColor = {
 };
 
 export default function DrillsScreen() {
+  const router = useRouter();
   const insets = useSafeAreaInsets();
 
   return (
@@ -27,6 +29,25 @@ export default function DrillsScreen() {
       contentContainerStyle={styles.content}
       showsVerticalScrollIndicator={false}
     >
+      <Text style={styles.title}>Drills</Text>
+
+      {/* Start Practice Card */}
+      <Card onPress={() => router.push('/session')} style={styles.practiceCard}>
+        <View style={styles.practiceRow}>
+          <View style={styles.practiceInfo}>
+            <Text style={styles.practiceLabel}>TODAY'S SESSION</Text>
+            <Text style={styles.practiceStrings}>Strings 1 & 3</Text>
+            <Text style={styles.practiceDuration}>10 Minutes</Text>
+          </View>
+          <Button
+            label="Start"
+            onPress={() => router.push('/session')}
+            variant="primary"
+            style={styles.practiceButton}
+          />
+        </View>
+      </Card>
+
       {/* Streak Banner */}
       <Card style={styles.streakCard} pressable={false}>
         <View style={styles.streakRow}>
@@ -92,7 +113,46 @@ const styles = StyleSheet.create({
   },
   content: {
     paddingHorizontal: spacing.xl,
-    paddingBottom: spacing['4xl'],
+    paddingBottom: 100,
+  },
+  title: {
+    ...typography.title,
+    color: colors.textPrimary,
+    marginBottom: spacing.xl,
+  },
+  practiceCard: {
+    marginBottom: spacing.xl,
+    paddingVertical: spacing.xl,
+    paddingHorizontal: spacing.xl,
+  },
+  practiceRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  practiceInfo: {
+    flex: 1,
+  },
+  practiceLabel: {
+    ...typography.small,
+    color: colors.goldMuted,
+    letterSpacing: 1.5,
+    fontWeight: '600',
+    marginBottom: spacing.xs,
+  },
+  practiceStrings: {
+    ...typography.subtitle,
+    color: colors.textPrimary,
+    fontWeight: '600',
+  },
+  practiceDuration: {
+    ...typography.caption,
+    color: colors.textSecondary,
+    marginTop: spacing.xs,
+  },
+  practiceButton: {
+    paddingHorizontal: spacing.xl,
+    paddingVertical: spacing.md,
   },
   streakCard: {
     marginBottom: spacing.xl,
