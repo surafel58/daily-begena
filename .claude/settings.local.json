@@ -9,7 +9,10 @@
       "Bash(npx tsc:*)",
       "Bash(npx expo:*)",
       "WebSearch",
-      "WebFetch(domain:play.google.com)"
+      "WebFetch(domain:play.google.com)",
+      "Bash(find:*)",
+      "Bash(head:*)",
+      "Bash(node:*)"
     ]
   }
 }

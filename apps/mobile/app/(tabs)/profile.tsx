@@ -1,9 +1,13 @@
-import { View, Text, StyleSheet, ScrollView, Linking } from 'react-native';
+import { useState } from 'react';
+import { View, Text, StyleSheet, ScrollView, Pressable } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Card, colors, spacing, typography } from '../../src/shared/ui';
 
+type NumberingScheme = 'standard' | 'traditional';
+
 export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
+  const [numberingScheme, setNumberingScheme] = useState<NumberingScheme>('standard');
 
   return (
     <ScrollView
@@ -32,18 +36,56 @@ export default function ProfileScreen() {
         </Text>
       </Card>
 
+      {/* String Numbering Scheme */}
+      <Card style={styles.card} pressable={false}>
+        <Text style={styles.cardTitle}>String Numbering</Text>
+        <Text style={styles.numberingDesc}>
+          Choose how strings are labeled during practice
+        </Text>
+        <View style={styles.toggleRow}>
+          <Pressable
+            style={[
+              styles.toggleOption,
+              numberingScheme === 'standard' && styles.toggleActive,
+            ]}
+            onPress={() => setNumberingScheme('standard')}
+          >
+            <Text
+              style={[
+                styles.toggleText,
+                numberingScheme === 'standard' && styles.toggleTextActive,
+              ]}
+            >
+              Standard (1-10)
+            </Text>
+          </Pressable>
+          <Pressable
+            style={[
+              styles.toggleOption,
+              numberingScheme === 'traditional' && styles.toggleActive,
+            ]}
+            onPress={() => setNumberingScheme('traditional')}
+          >
+            <Text
+              style={[
+                styles.toggleText,
+                numberingScheme === 'traditional' && styles.toggleTextActive,
+              ]}
+            >
+              Traditional
+            </Text>
+          </Pressable>
+        </View>
+      </Card>
+
       {/* About the App */}
       <Card style={styles.card} pressable={false}>
         <Text style={styles.cardTitle}>About Daily Begena</Text>
         <Text style={styles.aboutText}>
-          Daily Begena is a practice coach designed to help you build
-          consistent Begena playing habits. Complete a short daily session —
-          tune your strings, run a finger drill with a metronome, and test
-          your ear — all in under 15 minutes.
-        </Text>
-        <Text style={styles.aboutText}>
-          Track your streak, watch your timing improve, and grow your
-          confidence one session at a time.
+          The Begena (በገና) is a sacred 10-string box lyre used in Ethiopian
+          Orthodox devotional music. Daily Begena is a practice coach that helps
+          you build consistent playing habits through short daily sessions —
+          tune, drill, and train your ear.
         </Text>
       </Card>
 
@@ -128,11 +170,40 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     fontStyle: 'italic',
   },
+  numberingDesc: {
+    ...typography.caption,
+    color: colors.textSecondary,
+    marginBottom: spacing.lg,
+  },
+  toggleRow: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+  },
+  toggleOption: {
+    flex: 1,
+    paddingVertical: spacing.md,
+    borderRadius: 12,
+    backgroundColor: colors.surfaceLight,
+    alignItems: 'center',
+    borderWidth: 1.5,
+    borderColor: 'transparent',
+  },
+  toggleActive: {
+    borderColor: colors.goldMuted,
+    backgroundColor: 'rgba(212, 163, 115, 0.1)',
+  },
+  toggleText: {
+    ...typography.caption,
+    color: colors.textSecondary,
+    fontWeight: '600',
+  },
+  toggleTextActive: {
+    color: colors.goldMuted,
+  },
   aboutText: {
     ...typography.body,
     color: colors.textSecondary,
     lineHeight: 24,
-    marginBottom: spacing.md,
   },
   infoRow: {
     flexDirection: 'row',

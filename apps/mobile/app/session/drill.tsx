@@ -63,6 +63,7 @@ export default function DrillScreen() {
   useEffect(() => {
     if (phase !== 'playing' || isPaused) return;
 
+    // Metronome pulse: breathing circle in deep teal
     pulseScale.value = withRepeat(
       withSequence(
         withTiming(1.15, { duration: (60 / BPM) * 500, easing: Easing.inOut(Easing.ease) }),
@@ -87,15 +88,18 @@ export default function DrillScreen() {
         return prev + 1;
       });
 
+      // Alternate between today's strings
       setCurrentString((prev) => (prev === 1 ? 3 : 1));
 
       // Simulate hit/miss feedback
       if (Math.random() > 0.3) {
+        // Hit: gold glow + ripple
         numberGlow.value = withSequence(
           withTiming(1, { duration: 100 }),
           withTiming(0, { duration: 300 }),
         );
       } else {
+        // Miss: red vignette at edges
         vignette.value = withSequence(
           withTiming(0.4, { duration: 100 }),
           withTiming(0, { duration: 400 }),
@@ -109,6 +113,7 @@ export default function DrillScreen() {
     };
   }, [phase, isPaused]);
 
+  // Auto-advance on done
   useEffect(() => {
     if (phase === 'done') {
       cancelAnimation(pulseScale);
@@ -160,15 +165,15 @@ export default function DrillScreen() {
 
   return (
     <View style={[styles.container, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
-      {/* Progress Bar */}
+      {/* Progress Bar — thin gold line at top */}
       <View style={styles.progressTrack}>
         <Animated.View style={[styles.progressFill, progressAnimatedStyle]} />
       </View>
 
-      {/* Vignette for miss feedback */}
+      {/* Red vignette for miss feedback */}
       <Animated.View style={[styles.vignette, vignetteAnimatedStyle]} pointerEvents="none" />
 
-      {/* Countdown */}
+      {/* Count-in overlay */}
       {phase === 'countdown' && (
         <View style={styles.countdownOverlay}>
           <Animated.Text style={[styles.countdownText, countdownAnimatedStyle]}>
@@ -177,11 +182,12 @@ export default function DrillScreen() {
         </View>
       )}
 
-      {/* Drill View */}
+      {/* Main drill view */}
       {phase !== 'countdown' && (
         <View style={styles.drillArea}>
           <Text style={styles.tempoText}>{BPM} BPM</Text>
 
+          {/* Metronome pulse circle + string number */}
           <View style={styles.pulseContainer}>
             <Animated.View style={[styles.pulseCircle, pulseAnimatedStyle]} />
             <Animated.Text style={[styles.stringNumber, numberGlowStyle]}>
@@ -196,7 +202,7 @@ export default function DrillScreen() {
         </View>
       )}
 
-      {/* Controls */}
+      {/* Pause control */}
       {phase === 'playing' && (
         <View style={styles.controls}>
           <Pressable onPress={togglePause} style={styles.pauseButton}>

@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback } from 'react';
 import { View, Text, StyleSheet, Pressable, Dimensions } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -10,15 +10,77 @@ import Animated, {
   withSequence,
   withRepeat,
   Easing,
-  runOnJS,
 } from 'react-native-reanimated';
 import { colors, spacing, typography } from '../../src/shared/ui';
 
-const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const TOTAL_STRINGS = 10;
 const TODAY_STRINGS = [1, 3]; // Placeholder: today's strings to tune
 
 type TuneStatus = 'waiting' | 'listening' | 'low' | 'close' | 'high' | 'tuned';
+
+function TuneString({
+  stringNumber,
+  isTarget,
+  isCurrent,
+  isTuned,
+  onPress,
+}: {
+  stringNumber: number;
+  isTarget: boolean;
+  isCurrent: boolean;
+  isTuned: boolean;
+  onPress: () => void;
+}) {
+  const vibration = useSharedValue(0);
+
+  const triggerVibration = useCallback(() => {
+    vibration.value = withSequence(
+      withRepeat(
+        withSequence(
+          withTiming(2, { duration: 30, easing: Easing.inOut(Easing.sin) }),
+          withTiming(-2, { duration: 30, easing: Easing.inOut(Easing.sin) }),
+        ),
+        6,
+        true,
+      ),
+      withTiming(0, { duration: 100 }),
+    );
+  }, [vibration]);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    width: isTarget ? 3 + vibration.value : 1.5,
+  }));
+
+  const handlePress = () => {
+    if (!isCurrent) return;
+    triggerVibration();
+    onPress();
+  };
+
+  return (
+    <Pressable style={styles.stringTouchArea} onPress={handlePress}>
+      <Animated.View
+        style={[
+          styles.string,
+          animatedStyle,
+          {
+            backgroundColor: isTuned
+              ? colors.success
+              : isCurrent
+                ? colors.goldMuted
+                : isTarget
+                  ? colors.goldMuted
+                  : colors.stringInactive,
+            shadowColor: isCurrent ? colors.goldMuted : 'transparent',
+            shadowOpacity: isCurrent ? 0.8 : 0,
+            shadowRadius: isCurrent ? 10 : 0,
+          },
+        ]}
+      />
+    </Pressable>
+  );
+}
 
 export default function TuneScreen() {
   const router = useRouter();
@@ -51,7 +113,20 @@ export default function TuneScreen() {
     tuned: colors.success,
   };
 
-  // Simulate tuning flow on string tap
+  const advanceString = useCallback(() => {
+    const newTuned = [...tunedStrings, TODAY_STRINGS[currentStringIndex]];
+    setTunedStrings(newTuned);
+
+    if (currentStringIndex < TODAY_STRINGS.length - 1) {
+      setCurrentStringIndex(currentStringIndex + 1);
+      setStatus('waiting');
+      orbOpacity.value = withTiming(0, { duration: 200 });
+      orbY.value = 0;
+    } else {
+      router.replace('/session/drill');
+    }
+  }, [currentStringIndex, tunedStrings]);
+
   const simulateTuning = useCallback(() => {
     if (status !== 'waiting') return;
 
@@ -76,7 +151,6 @@ export default function TuneScreen() {
         withTiming(1.3, { duration: 200 }),
         withSpring(1, { damping: 10 }),
       );
-      // Flash the string gold
       flashOpacity.value = withSequence(
         withTiming(1, { duration: 150 }),
         withTiming(0, { duration: 400 }),
@@ -86,22 +160,7 @@ export default function TuneScreen() {
     setTimeout(() => {
       advanceString();
     }, 3500);
-  }, [status, currentStringIndex]);
-
-  const advanceString = useCallback(() => {
-    const newTuned = [...tunedStrings, TODAY_STRINGS[currentStringIndex]];
-    setTunedStrings(newTuned);
-
-    if (currentStringIndex < TODAY_STRINGS.length - 1) {
-      setCurrentStringIndex(currentStringIndex + 1);
-      setStatus('waiting');
-      orbOpacity.value = withTiming(0, { duration: 200 });
-      orbY.value = 0;
-    } else {
-      // All strings tuned — navigate to drill
-      router.replace('/session/drill');
-    }
-  }, [currentStringIndex, tunedStrings]);
+  }, [status, currentStringIndex, advanceString]);
 
   const orbAnimatedStyle = useAnimatedStyle(() => ({
     transform: [
@@ -110,8 +169,6 @@ export default function TuneScreen() {
     ],
     opacity: orbOpacity.value,
   }));
-
-  const stringSpacing = SCREEN_WIDTH / (TOTAL_STRINGS + 1);
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
@@ -131,42 +188,26 @@ export default function TuneScreen() {
           const isTuned = tunedStrings.includes(stringNum);
 
           return (
-            <Pressable
+            <View
               key={stringNum}
-              style={[
-                styles.stringTouchArea,
-                { left: stringSpacing * stringNum - 20 },
-              ]}
-              onPress={isCurrent ? simulateTuning : undefined}
+              style={styles.stringColumn}
             >
-              <View
-                style={[
-                  styles.string,
-                  {
-                    width: isTarget ? 3 : 1.5,
-                    backgroundColor: isTuned
-                      ? colors.success
-                      : isCurrent
-                        ? colors.goldMuted
-                        : isTarget
-                          ? colors.goldMuted
-                          : colors.stringInactive,
-                    shadowColor: isCurrent ? colors.goldMuted : 'transparent',
-                    shadowOpacity: isCurrent ? 0.8 : 0,
-                    shadowRadius: isCurrent ? 10 : 0,
-                  },
-                ]}
+              <TuneString
+                stringNumber={stringNum}
+                isTarget={isTarget}
+                isCurrent={isCurrent}
+                isTuned={isTuned}
+                onPress={simulateTuning}
               />
-              {/* Tuner Orb - only on current string */}
+              {/* Tuner Orb */}
               {isCurrent && (
                 <Animated.View
                   style={[
                     styles.orb,
-                    {
-                      backgroundColor: statusColors[status],
-                    },
+                    { backgroundColor: statusColors[status] },
                     orbAnimatedStyle,
                   ]}
+                  pointerEvents="none"
                 />
               )}
               {/* Tuned checkmark */}
@@ -175,7 +216,7 @@ export default function TuneScreen() {
                   <Text style={styles.checkmarkText}>✓</Text>
                 </View>
               )}
-            </Pressable>
+            </View>
           );
         })}
       </View>
@@ -190,7 +231,7 @@ export default function TuneScreen() {
         )}
       </View>
 
-      {/* Skip / Back */}
+      {/* Footer */}
       <View style={[styles.footer, { paddingBottom: insets.bottom + spacing.lg }]}>
         <Pressable onPress={() => router.back()} style={styles.skipButton}>
           <Text style={styles.skipText}>Back</Text>
@@ -222,15 +263,19 @@ const styles = StyleSheet.create({
   },
   stringsArea: {
     flex: 1,
-    position: 'relative',
+    flexDirection: 'row',
+    justifyContent: 'space-evenly',
+    paddingHorizontal: 20,
   },
-  stringTouchArea: {
-    position: 'absolute',
-    top: 0,
-    bottom: 0,
-    width: 40,
+  stringColumn: {
+    flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  stringTouchArea: {
+    width: '100%',
+    height: '100%',
+    alignItems: 'center',
   },
   string: {
     height: '100%',

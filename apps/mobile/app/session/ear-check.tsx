@@ -7,15 +7,13 @@ import Animated, {
   useSharedValue,
   withTiming,
   withSequence,
-  withDelay,
 } from 'react-native-reanimated';
 import { colors, spacing, typography } from '../../src/shared/ui';
 
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const TOTAL_STRINGS = 10;
 const TODAY_STRINGS = [1, 3]; // Match today's string count for rounds
 
-type RoundState = 'listening' | 'answered' | 'transitioning';
+type RoundState = 'listening' | 'answered';
 
 export default function EarCheckScreen() {
   const router = useRouter();
@@ -28,9 +26,6 @@ export default function EarCheckScreen() {
 
   const totalRounds = TODAY_STRINGS.length;
   const targetString = TODAY_STRINGS[currentRound];
-
-  // Animation values per string for feedback
-  const feedbackOpacity = useSharedValue(0);
 
   const playSound = useCallback(() => {
     setIsPlaying(true);
@@ -56,7 +51,6 @@ export default function EarCheckScreen() {
         setRoundState('listening');
         setSelectedString(null);
       } else {
-        // All rounds complete
         router.replace('/session/results');
       }
     }, 2000);
@@ -78,8 +72,6 @@ export default function EarCheckScreen() {
     }
     return 1.5;
   };
-
-  const stringSpacing = SCREEN_WIDTH / (TOTAL_STRINGS + 1);
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
@@ -122,7 +114,7 @@ export default function EarCheckScreen() {
         )}
       </View>
 
-      {/* Strings */}
+      {/* Strings — all equal thin grey, interactive */}
       <View style={styles.stringsArea}>
         {Array.from({ length: TOTAL_STRINGS }, (_, i) => {
           const stringNum = i + 1;
@@ -131,27 +123,25 @@ export default function EarCheckScreen() {
           const showCheckmark = roundState === 'answered' && stringNum === targetString;
 
           return (
-            <Pressable
-              key={stringNum}
-              style={[
-                styles.stringTouchArea,
-                { left: stringSpacing * stringNum - 20 },
-              ]}
-              onPress={() => handleStringPress(stringNum)}
-              disabled={roundState !== 'listening'}
-            >
-              <View
-                style={[
-                  styles.string,
-                  {
-                    width: stringWidth,
-                    backgroundColor: stringColor,
-                    shadowColor: stringColor !== colors.stringInactive ? stringColor : 'transparent',
-                    shadowOpacity: stringColor !== colors.stringInactive ? 0.8 : 0,
-                    shadowRadius: stringColor !== colors.stringInactive ? 10 : 0,
-                  },
-                ]}
-              />
+            <View key={stringNum} style={styles.stringColumn}>
+              <Pressable
+                style={styles.stringTouchArea}
+                onPress={() => handleStringPress(stringNum)}
+                disabled={roundState !== 'listening'}
+              >
+                <View
+                  style={[
+                    styles.string,
+                    {
+                      width: stringWidth,
+                      backgroundColor: stringColor,
+                      shadowColor: stringColor !== colors.stringInactive ? stringColor : 'transparent',
+                      shadowOpacity: stringColor !== colors.stringInactive ? 0.8 : 0,
+                      shadowRadius: stringColor !== colors.stringInactive ? 10 : 0,
+                    },
+                  ]}
+                />
+              </Pressable>
               {/* String number label */}
               <View style={styles.stringLabel}>
                 <Text style={[
@@ -167,7 +157,7 @@ export default function EarCheckScreen() {
                   <Text style={styles.checkmarkText}>✓</Text>
                 </View>
               )}
-            </Pressable>
+            </View>
           );
         })}
       </View>
@@ -253,13 +243,17 @@ const styles = StyleSheet.create({
   },
   stringsArea: {
     flex: 1,
-    position: 'relative',
+    flexDirection: 'row',
+    justifyContent: 'space-evenly',
+    paddingHorizontal: 20,
+  },
+  stringColumn: {
+    flex: 1,
+    alignItems: 'center',
   },
   stringTouchArea: {
-    position: 'absolute',
-    top: 0,
-    bottom: 0,
-    width: 40,
+    width: '100%',
+    height: '100%',
     alignItems: 'center',
   },
   string: {

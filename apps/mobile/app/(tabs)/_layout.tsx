@@ -1,6 +1,7 @@
 import { Tabs } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, spacing } from '../../src/shared/ui/theme';
 
 const TAB_MARGIN = spacing.xl; // 20px — matches dashboard content edges
@@ -18,10 +19,12 @@ function TabIcon({ name, focused }: { name: keyof typeof Ionicons.glyphMap; focu
 }
 
 export default function TabLayout() {
+  const insets = useSafeAreaInsets();
+
   return (
     <Tabs
       screenOptions={{
-        tabBarStyle: styles.tabBar,
+        tabBarStyle: [styles.tabBar, { bottom: Math.max(insets.bottom, 16) }],
         tabBarActiveTintColor: colors.goldBright,
         tabBarInactiveTintColor: colors.textSecondary,
         tabBarLabelStyle: styles.tabLabel,
@@ -63,7 +66,6 @@ export default function TabLayout() {
 const styles = StyleSheet.create({
   tabBar: {
     position: 'absolute',
-    bottom: 16,
     marginHorizontal: TAB_MARGIN,
     height: 64,
     borderRadius: 32,

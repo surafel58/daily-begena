@@ -19,12 +19,10 @@ export default function ResultsScreen() {
 
   // Placeholder data
   const accuracy = 85;
-  const timingScore = 92;
-  const streakBefore = 5;
-  const streakAfter = 6;
   const consistencyMessage = 'Great Rhythm!';
+  const streakAfter = 6;
 
-  // Animations
+  // Staggered entrance animations
   const headerOpacity = useSharedValue(0);
   const headerTranslateY = useSharedValue(20);
   const cardOpacity = useSharedValue(0);
@@ -35,7 +33,6 @@ export default function ResultsScreen() {
   const buttonOpacity = useSharedValue(0);
 
   useEffect(() => {
-    // Staggered entrance
     headerOpacity.value = withDelay(200, withTiming(1, { duration: 500 }));
     headerTranslateY.value = withDelay(200, withSpring(0, { damping: 15 }));
 
@@ -45,7 +42,7 @@ export default function ResultsScreen() {
     streakOpacity.value = withDelay(1000, withTiming(1, { duration: 400 }));
     streakScale.value = withDelay(1000, withSpring(1, { damping: 10, stiffness: 150 }));
 
-    // Streak number increment animation
+    // Streak number scale-up + spark effect
     streakNumberScale.value = withDelay(
       1300,
       withSequence(
@@ -90,16 +87,9 @@ export default function ResultsScreen() {
       {/* Score Card */}
       <Animated.View style={cardAnimatedStyle}>
         <Card style={styles.scoreCard} pressable={false}>
-          <View style={styles.scoreRow}>
-            <View style={styles.scoreStat}>
-              <Text style={styles.scoreValue}>{accuracy}%</Text>
-              <Text style={styles.scoreLabel}>Accuracy</Text>
-            </View>
-            <View style={styles.scoreDivider} />
-            <View style={styles.scoreStat}>
-              <Text style={styles.scoreValue}>{timingScore}%</Text>
-              <Text style={styles.scoreLabel}>Timing</Text>
-            </View>
+          <View style={styles.accuracyArea}>
+            <Text style={styles.accuracyValue}>{accuracy}%</Text>
+            <Text style={styles.accuracyLabel}>Accuracy</Text>
           </View>
           <View style={styles.consistencyRow}>
             <Text style={styles.consistencyText}>{consistencyMessage}</Text>
@@ -119,15 +109,9 @@ export default function ResultsScreen() {
       {/* Actions */}
       <Animated.View style={[styles.actions, buttonAnimatedStyle]}>
         <Button
-          label="Retry Drill"
-          onPress={() => router.replace('/session/drill')}
-          variant="outline"
-          style={styles.retryButton}
-        />
-        <Button
           label="Finish"
           onPress={() => router.replace('/(tabs)')}
-          variant="primary"
+          variant="outline"
           style={styles.finishButton}
         />
       </Animated.View>
@@ -155,32 +139,22 @@ const styles = StyleSheet.create({
   scoreCard: {
     marginBottom: spacing['3xl'],
   },
-  scoreRow: {
-    flexDirection: 'row',
+  accuracyArea: {
     alignItems: 'center',
+    paddingVertical: spacing.lg,
   },
-  scoreStat: {
-    flex: 1,
-    alignItems: 'center',
-  },
-  scoreValue: {
-    fontSize: 36,
+  accuracyValue: {
+    fontSize: 48,
     fontWeight: 'bold',
     color: colors.goldBright,
   },
-  scoreLabel: {
+  accuracyLabel: {
     ...typography.caption,
     color: colors.textSecondary,
     marginTop: spacing.xs,
   },
-  scoreDivider: {
-    width: 1,
-    height: 48,
-    backgroundColor: colors.surfaceLight,
-  },
   consistencyRow: {
     alignItems: 'center',
-    marginTop: spacing.xl,
     paddingTop: spacing.lg,
     borderTopWidth: 1,
     borderTopColor: colors.surfaceLight,
@@ -209,9 +183,6 @@ const styles = StyleSheet.create({
   },
   actions: {
     gap: spacing.md,
-  },
-  retryButton: {
-    width: '100%',
   },
   finishButton: {
     width: '100%',
