@@ -230,7 +230,7 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.sm,
   },
   connectorArrow: {
-    fontSize: 20,
+    fontSize: 28,
     color: colors.goldMuted,
   },
   motivationalText: {
