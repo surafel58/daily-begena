@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { View, Text, StyleSheet, Pressable } from 'react-native';
+import { View, Text, StyleSheet, Pressable, Dimensions } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, {
@@ -14,8 +14,10 @@ import Animated, {
 } from 'react-native-reanimated';
 import { colors, spacing, typography } from '../../src/shared/ui';
 
-const DRILL_DURATION_SEC = 30; // Short for demo
+const { width: SCREEN_W, height: SCREEN_H } = Dimensions.get('window');
+const DRILL_DURATION_SEC = 30;
 const BPM = 60;
+const ORB_SIZE = 200;
 
 type DrillPhase = 'countdown' | 'playing' | 'done';
 
@@ -30,10 +32,11 @@ export default function DrillScreen() {
   const timerRef = useRef<ReturnType<typeof setInterval>>(undefined);
 
   const pulseScale = useSharedValue(1);
+  const pulseOpacity = useSharedValue(0.25);
   const countdownOpacity = useSharedValue(1);
   const countdownScale = useSharedValue(0.5);
   const progressWidth = useSharedValue(0);
-  const vignette = useSharedValue(0);
+  const vignetteOpacity = useSharedValue(0);
   const numberGlow = useSharedValue(0);
 
   // Countdown
@@ -63,11 +66,19 @@ export default function DrillScreen() {
   useEffect(() => {
     if (phase !== 'playing' || isPaused) return;
 
-    // Metronome pulse: breathing circle in deep teal
+    // Breathing metronome pulse
     pulseScale.value = withRepeat(
       withSequence(
-        withTiming(1.15, { duration: (60 / BPM) * 500, easing: Easing.inOut(Easing.ease) }),
+        withTiming(1.2, { duration: (60 / BPM) * 500, easing: Easing.inOut(Easing.ease) }),
         withTiming(1, { duration: (60 / BPM) * 500, easing: Easing.inOut(Easing.ease) }),
+      ),
+      -1,
+      true,
+    );
+    pulseOpacity.value = withRepeat(
+      withSequence(
+        withTiming(0.4, { duration: (60 / BPM) * 500, easing: Easing.inOut(Easing.ease) }),
+        withTiming(0.2, { duration: (60 / BPM) * 500, easing: Easing.inOut(Easing.ease) }),
       ),
       -1,
       true,
@@ -88,20 +99,16 @@ export default function DrillScreen() {
         return prev + 1;
       });
 
-      // Alternate between today's strings
       setCurrentString((prev) => (prev === 1 ? 3 : 1));
 
-      // Simulate hit/miss feedback
       if (Math.random() > 0.3) {
-        // Hit: gold glow + ripple
         numberGlow.value = withSequence(
           withTiming(1, { duration: 100 }),
           withTiming(0, { duration: 300 }),
         );
       } else {
-        // Miss: red vignette at edges
-        vignette.value = withSequence(
-          withTiming(0.4, { duration: 100 }),
+        vignetteOpacity.value = withSequence(
+          withTiming(0.6, { duration: 100 }),
           withTiming(0, { duration: 400 }),
         );
       }
@@ -110,13 +117,15 @@ export default function DrillScreen() {
     return () => {
       clearInterval(timerRef.current);
       cancelAnimation(pulseScale);
+      cancelAnimation(pulseOpacity);
     };
   }, [phase, isPaused]);
 
-  // Auto-advance on done
+  // Auto-advance
   useEffect(() => {
     if (phase === 'done') {
       cancelAnimation(pulseScale);
+      cancelAnimation(pulseOpacity);
       const timeout = setTimeout(() => {
         router.replace('/session/ear-check');
       }, 1000);
@@ -131,12 +140,16 @@ export default function DrillScreen() {
       setIsPaused(true);
       clearInterval(timerRef.current);
       cancelAnimation(pulseScale);
+      cancelAnimation(pulseOpacity);
+      cancelAnimation(progressWidth);
       pulseScale.value = 1;
+      pulseOpacity.value = 0.25;
     }
   }, [isPaused]);
 
   const pulseAnimatedStyle = useAnimatedStyle(() => ({
     transform: [{ scale: pulseScale.value }],
+    opacity: pulseOpacity.value,
   }));
 
   const countdownAnimatedStyle = useAnimatedStyle(() => ({
@@ -149,12 +162,12 @@ export default function DrillScreen() {
   }));
 
   const vignetteAnimatedStyle = useAnimatedStyle(() => ({
-    opacity: vignette.value,
+    opacity: vignetteOpacity.value,
   }));
 
   const numberGlowStyle = useAnimatedStyle(() => ({
     textShadowColor: colors.goldBright,
-    textShadowRadius: numberGlow.value * 20,
+    textShadowRadius: numberGlow.value * 30,
   }));
 
   const formatTime = (sec: number) => {
@@ -164,14 +177,40 @@ export default function DrillScreen() {
   };
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
-      {/* Progress Bar — thin gold line at top */}
-      <View style={styles.progressTrack}>
-        <Animated.View style={[styles.progressFill, progressAnimatedStyle]} />
+    <View style={styles.container}>
+      {/* Progress bar + timer at top */}
+      {phase !== 'countdown' && (
+        <View style={[styles.topSection, { top: insets.top + spacing.sm }]}>
+          <View style={styles.progressTrack}>
+            <Animated.View style={[styles.progressFill, progressAnimatedStyle]} />
+          </View>
+          <View style={styles.timerRow}>
+            <View style={styles.recordDot} />
+            <Text style={styles.timerText}>{formatTime(elapsed)}</Text>
+            <Text style={styles.bpmText}>{BPM} BPM</Text>
+          </View>
+        </View>
+      )}
+
+      {/* Edge lighting — E76F51 gradient glow along screen edges */}
+      <View style={styles.edgeLightTop} pointerEvents="none">
+        <View style={styles.edgeGlowInnerH} />
+      </View>
+      <View style={styles.edgeLightBottom} pointerEvents="none">
+        <View style={styles.edgeGlowInnerH} />
+      </View>
+      <View style={styles.edgeLightLeft} pointerEvents="none">
+        <View style={styles.edgeGlowInnerV} />
+      </View>
+      <View style={styles.edgeLightRight} pointerEvents="none">
+        <View style={styles.edgeGlowInnerV} />
       </View>
 
-      {/* Red vignette for miss feedback */}
-      <Animated.View style={[styles.vignette, vignetteAnimatedStyle]} pointerEvents="none" />
+      {/* Miss feedback — edge lighting flashes red */}
+      <Animated.View style={[styles.missEdgeTop, vignetteAnimatedStyle]} pointerEvents="none" />
+      <Animated.View style={[styles.missEdgeBottom, vignetteAnimatedStyle]} pointerEvents="none" />
+      <Animated.View style={[styles.missEdgeLeft, vignetteAnimatedStyle]} pointerEvents="none" />
+      <Animated.View style={[styles.missEdgeRight, vignetteAnimatedStyle]} pointerEvents="none" />
 
       {/* Count-in overlay */}
       {phase === 'countdown' && (
@@ -185,26 +224,25 @@ export default function DrillScreen() {
       {/* Main drill view */}
       {phase !== 'countdown' && (
         <View style={styles.drillArea}>
-          <Text style={styles.tempoText}>{BPM} BPM</Text>
-
-          {/* Metronome pulse circle + string number */}
-          <View style={styles.pulseContainer}>
-            <Animated.View style={[styles.pulseCircle, pulseAnimatedStyle]} />
+          {/* Glowing teal orb + string number */}
+          <View style={styles.orbContainer}>
+            {/* Outer blur halo */}
+            <Animated.View style={[styles.orbBlurOuter, pulseAnimatedStyle]} />
+            {/* 200x200 #2A4D69 circle with layer blur */}
+            <Animated.View style={[styles.orbGlow, pulseAnimatedStyle]} />
+            {/* Circle outline */}
+            <View style={styles.orbRing} />
+            {/* String number */}
             <Animated.Text style={[styles.stringNumber, numberGlowStyle]}>
               {currentString}
             </Animated.Text>
           </View>
-
-          <View style={styles.recordingRow}>
-            <View style={styles.recordingDot} />
-            <Text style={styles.recordingTime}>{formatTime(elapsed)}</Text>
-          </View>
         </View>
       )}
 
-      {/* Pause control */}
+      {/* Pause button */}
       {phase === 'playing' && (
-        <View style={styles.controls}>
+        <View style={[styles.controls, { paddingBottom: insets.bottom + spacing['3xl'] }]}>
           <Pressable onPress={togglePause} style={styles.pauseButton}>
             <Text style={styles.pauseIcon}>{isPaused ? '▶' : '❚❚'}</Text>
           </Pressable>
@@ -212,7 +250,7 @@ export default function DrillScreen() {
       )}
 
       {phase === 'done' && (
-        <View style={styles.controls}>
+        <View style={[styles.controls, { paddingBottom: insets.bottom + spacing['3xl'] }]}>
           <Text style={styles.doneText}>Complete!</Text>
         </View>
       )}
@@ -223,27 +261,180 @@ export default function DrillScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.bg,
+    backgroundColor: '#0A0A0A',
+  },
+  topSection: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    zIndex: 10,
+    alignItems: 'center',
   },
   progressTrack: {
+    width: '100%',
+    height: 4,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  progressFill: {
+    height: '100%',
+    backgroundColor: colors.goldBright,
+    borderRadius: 2,
+  },
+  timerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.sm,
+    marginTop: spacing.xl,
+  },
+  recordDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: '#E76F51',
+    shadowColor: '#E76F51',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.8,
+    shadowRadius: 6,
+    elevation: 6,
+  },
+  timerText: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: 'rgba(255, 255, 255, 0.6)',
+    fontVariant: ['tabular-nums'] as any,
+  },
+  bpmText: {
+    fontSize: 12,
+    fontWeight: '500',
+    color: 'rgba(255, 255, 255, 0.35)',
+  },
+
+  // Edge lighting — #E76F51 glow with gradient fade inward
+  edgeLightTop: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 30,
+    zIndex: 4,
+    overflow: 'hidden',
+  },
+  edgeLightBottom: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: 30,
+    zIndex: 4,
+    overflow: 'hidden',
+    transform: [{ rotate: '180deg' }],
+  },
+  edgeLightLeft: {
+    position: 'absolute',
+    top: 0,
+    bottom: 0,
+    left: 0,
+    width: 20,
+    zIndex: 4,
+    overflow: 'hidden',
+  },
+  edgeLightRight: {
+    position: 'absolute',
+    top: 0,
+    bottom: 0,
+    right: 0,
+    width: 20,
+    zIndex: 4,
+    overflow: 'hidden',
+    transform: [{ rotate: '180deg' }],
+  },
+  // Simulated gradient: thin bright line at edge, soft glow fading inward
+  edgeGlowInnerH: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 2,
+    backgroundColor: 'rgba(231, 111, 81, 0.5)',
+    shadowColor: '#E76F51',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.7,
+    shadowRadius: 25,
+    elevation: 10,
+  },
+  edgeGlowInnerV: {
+    position: 'absolute',
+    top: 0,
+    bottom: 0,
+    left: 0,
+    width: 2,
+    backgroundColor: 'rgba(231, 111, 81, 0.4)',
+    shadowColor: '#E76F51',
+    shadowOffset: { width: 8, height: 0 },
+    shadowOpacity: 0.6,
+    shadowRadius: 20,
+    elevation: 10,
+  },
+
+  // Miss feedback — edge lighting flashes red
+  missEdgeTop: {
     position: 'absolute',
     top: 0,
     left: 0,
     right: 0,
     height: 3,
-    backgroundColor: colors.surfaceLight,
-    zIndex: 10,
-  },
-  progressFill: {
-    height: '100%',
-    backgroundColor: colors.goldMuted,
-  },
-  vignette: {
-    ...StyleSheet.absoluteFillObject,
-    borderWidth: 40,
-    borderColor: colors.error,
+    backgroundColor: colors.error,
+    shadowColor: colors.error,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.9,
+    shadowRadius: 20,
+    elevation: 12,
     zIndex: 5,
   },
+  missEdgeBottom: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: 3,
+    backgroundColor: colors.error,
+    shadowColor: colors.error,
+    shadowOffset: { width: 0, height: -6 },
+    shadowOpacity: 0.9,
+    shadowRadius: 20,
+    elevation: 12,
+    zIndex: 5,
+  },
+  missEdgeLeft: {
+    position: 'absolute',
+    top: 0,
+    bottom: 0,
+    left: 0,
+    width: 3,
+    backgroundColor: colors.error,
+    shadowColor: colors.error,
+    shadowOffset: { width: 6, height: 0 },
+    shadowOpacity: 0.9,
+    shadowRadius: 20,
+    elevation: 12,
+    zIndex: 5,
+  },
+  missEdgeRight: {
+    position: 'absolute',
+    top: 0,
+    bottom: 0,
+    right: 0,
+    width: 3,
+    backgroundColor: colors.error,
+    shadowColor: colors.error,
+    shadowOffset: { width: -6, height: 0 },
+    shadowOpacity: 0.9,
+    shadowRadius: 20,
+    elevation: 12,
+    zIndex: 5,
+  },
+
   countdownOverlay: {
     ...StyleSheet.absoluteFillObject,
     alignItems: 'center',
@@ -255,54 +446,61 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: colors.textPrimary,
   },
+
   drillArea: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  tempoText: {
-    ...typography.caption,
-    color: colors.textSecondary,
-    marginBottom: spacing['4xl'],
-  },
-  pulseContainer: {
-    width: 200,
-    height: 200,
+
+  // Centered orb
+  orbContainer: {
+    width: ORB_SIZE,
+    height: ORB_SIZE,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  pulseCircle: {
-    ...StyleSheet.absoluteFillObject,
-    borderRadius: 100,
+  // 200x200 #2A4D69 circle with layer blur (simulated via stacked soft shadows)
+  orbGlow: {
+    position: 'absolute',
+    width: ORB_SIZE,
+    height: ORB_SIZE,
+    borderRadius: 9999,
     backgroundColor: colors.teal,
-    opacity: 0.3,
+    shadowColor: colors.teal,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 1,
+    shadowRadius: 60,
+    elevation: 30,
+  },
+  // Outer soft halo to simulate layer blur spreading beyond the circle
+  orbBlurOuter: {
+    position: 'absolute',
+    width: ORB_SIZE * 1.6,
+    height: ORB_SIZE * 1.6,
+    borderRadius: 9999,
+    backgroundColor: 'rgba(42, 77, 105, 0.25)',
+  },
+  orbRing: {
+    position: 'absolute',
+    width: ORB_SIZE,
+    height: ORB_SIZE,
+    borderRadius: 9999,
+    borderWidth: 1.5,
+    borderColor: 'rgba(224, 224, 224, 0.2)',
   },
   stringNumber: {
-    fontSize: 80,
+    fontSize: 130,
     fontWeight: 'bold',
     color: colors.textPrimary,
     textShadowOffset: { width: 0, height: 0 },
+    textAlign: 'center',
+    includeFontPadding: false,
+    lineHeight: 140,
   },
-  recordingRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-    marginTop: spacing['4xl'],
-  },
-  recordingDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: colors.error,
-  },
-  recordingTime: {
-    ...typography.body,
-    color: colors.textSecondary,
-    fontVariant: ['tabular-nums'],
-  },
+
   controls: {
     alignItems: 'center',
-    paddingBottom: spacing['5xl'],
   },
   pauseButton: {
     width: 56,

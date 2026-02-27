@@ -1,17 +1,11 @@
 import { useState, useCallback } from 'react';
-import { View, Text, StyleSheet, Pressable, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, Pressable } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import Animated, {
-  useAnimatedStyle,
-  useSharedValue,
-  withTiming,
-  withSequence,
-} from 'react-native-reanimated';
 import { colors, spacing, typography } from '../../src/shared/ui';
 
 const TOTAL_STRINGS = 10;
-const TODAY_STRINGS = [1, 3]; // Match today's string count for rounds
+const TODAY_STRINGS = [1, 3];
 
 type RoundState = 'listening' | 'answered';
 
@@ -29,7 +23,6 @@ export default function EarCheckScreen() {
 
   const playSound = useCallback(() => {
     setIsPlaying(true);
-    // Simulate playing a reference tone
     setTimeout(() => setIsPlaying(false), 1500);
   }, []);
 
@@ -44,7 +37,6 @@ export default function EarCheckScreen() {
       setCorrectCount((prev) => prev + 1);
     }
 
-    // After feedback delay, advance
     setTimeout(() => {
       if (currentRound < totalRounds - 1) {
         setCurrentRound((prev) => prev + 1);
@@ -60,7 +52,7 @@ export default function EarCheckScreen() {
     if (roundState !== 'answered' || selectedString === null) {
       return colors.stringInactive;
     }
-    if (stringNum === targetString) return colors.success;
+    if (stringNum === targetString) return colors.goldBright;
     if (stringNum === selectedString && selectedString !== targetString) return colors.error;
     return colors.stringInactive;
   };
@@ -74,9 +66,9 @@ export default function EarCheckScreen() {
   };
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top }]}>
-      {/* Progress */}
-      <View style={styles.header}>
+    <View style={styles.container}>
+      {/* Header */}
+      <View style={[styles.header, { paddingTop: insets.top + spacing.lg }]}>
         <Text style={styles.roundText}>
           Round {currentRound + 1} of {totalRounds}
         </Text>
@@ -85,42 +77,12 @@ export default function EarCheckScreen() {
         </Text>
       </View>
 
-      {/* Instruction */}
-      <View style={styles.instruction}>
-        {roundState === 'listening' && !isPlaying && (
-          <Pressable onPress={playSound} style={styles.listenButton}>
-            <Text style={styles.listenIcon}>▶</Text>
-            <Text style={styles.listenText}>Listen</Text>
-          </Pressable>
-        )}
-        {roundState === 'listening' && isPlaying && (
-          <Text style={styles.playingText}>Playing...</Text>
-        )}
-        {roundState === 'listening' && !isPlaying && (
-          <Text style={styles.promptText}>Which string was that?</Text>
-        )}
-        {roundState === 'answered' && selectedString === targetString && (
-          <Text style={[styles.feedbackText, { color: colors.success }]}>Correct!</Text>
-        )}
-        {roundState === 'answered' && selectedString !== targetString && (
-          <View style={styles.feedbackContainer}>
-            <Text style={[styles.feedbackText, { color: colors.error }]}>
-              Not quite
-            </Text>
-            <Text style={styles.correctAnswer}>
-              It was String {targetString}
-            </Text>
-          </View>
-        )}
-      </View>
-
-      {/* Strings — all equal thin grey, interactive */}
+      {/* Strings — full screen height, with listen button overlaid in center */}
       <View style={styles.stringsArea}>
         {Array.from({ length: TOTAL_STRINGS }, (_, i) => {
           const stringNum = i + 1;
           const stringColor = getStringColor(stringNum);
           const stringWidth = getStringWidth(stringNum);
-          const showCheckmark = roundState === 'answered' && stringNum === targetString;
 
           return (
             <View key={stringNum} style={styles.stringColumn}>
@@ -142,8 +104,11 @@ export default function EarCheckScreen() {
                   ]}
                 />
               </Pressable>
-              {/* String number label */}
-              <View style={styles.stringLabel}>
+              {/* String number */}
+              <View style={[
+                styles.stringLabel,
+                stringColor !== colors.stringInactive && { borderColor: stringColor },
+              ]}>
                 <Text style={[
                   styles.stringLabelText,
                   { color: stringColor !== colors.stringInactive ? stringColor : colors.textSecondary },
@@ -151,8 +116,8 @@ export default function EarCheckScreen() {
                   {stringNum}
                 </Text>
               </View>
-              {/* Checkmark */}
-              {showCheckmark && (
+              {/* Checkmark on correct */}
+              {roundState === 'answered' && stringNum === targetString && (
                 <View style={styles.checkmark}>
                   <Text style={styles.checkmarkText}>✓</Text>
                 </View>
@@ -160,6 +125,31 @@ export default function EarCheckScreen() {
             </View>
           );
         })}
+
+        {/* Center overlay: question + listen button + label */}
+        <View style={styles.centerOverlay} pointerEvents="box-none">
+          {roundState === 'listening' && !isPlaying && (
+            <>
+              <Text style={styles.promptText}>Which string was that?</Text>
+              <Pressable onPress={playSound} style={styles.listenButton}>
+                <Text style={styles.listenIcon}>▶</Text>
+              </Pressable>
+              <Text style={styles.listenLabel}>Listen</Text>
+            </>
+          )}
+          {roundState === 'listening' && isPlaying && (
+            <Text style={styles.playingText}>Playing...</Text>
+          )}
+          {roundState === 'answered' && selectedString === targetString && (
+            <Text style={[styles.feedbackText, { color: colors.goldBright }]}>Correct!</Text>
+          )}
+          {roundState === 'answered' && selectedString !== targetString && (
+            <View style={styles.feedbackContainer}>
+              <Text style={[styles.feedbackText, { color: colors.error }]}>Not quite</Text>
+              <Text style={styles.correctAnswer}>It was String {targetString}</Text>
+            </View>
+          )}
+        </View>
       </View>
 
       {/* Skip */}
@@ -178,7 +168,6 @@ const styles = StyleSheet.create({
     backgroundColor: colors.bg,
   },
   header: {
-    paddingTop: spacing.lg,
     paddingHorizontal: spacing.xl,
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -186,60 +175,11 @@ const styles = StyleSheet.create({
   },
   roundText: {
     ...typography.caption,
-    color: colors.textSecondary,
+    color: colors.goldBright,
   },
   scoreText: {
     ...typography.caption,
     color: colors.goldBright,
-  },
-  instruction: {
-    alignItems: 'center',
-    paddingVertical: spacing['3xl'],
-    minHeight: 120,
-    justifyContent: 'center',
-  },
-  listenButton: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: colors.teal,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: spacing.lg,
-    shadowColor: colors.teal,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.4,
-    shadowRadius: 12,
-    elevation: 8,
-  },
-  listenIcon: {
-    fontSize: 24,
-    color: colors.textPrimary,
-  },
-  listenText: {
-    ...typography.small,
-    color: colors.textPrimary,
-    marginTop: 2,
-  },
-  playingText: {
-    ...typography.subtitle,
-    color: colors.tealLight,
-  },
-  promptText: {
-    ...typography.body,
-    color: colors.textSecondary,
-  },
-  feedbackText: {
-    ...typography.title,
-    fontWeight: 'bold',
-  },
-  feedbackContainer: {
-    alignItems: 'center',
-    gap: spacing.sm,
-  },
-  correctAnswer: {
-    ...typography.body,
-    color: colors.textSecondary,
   },
   stringsArea: {
     flex: 1,
@@ -280,8 +220,8 @@ const styles = StyleSheet.create({
   },
   checkmark: {
     position: 'absolute',
-    top: '40%',
-    backgroundColor: colors.success,
+    top: '35%',
+    backgroundColor: colors.goldBright,
     width: 28,
     height: 28,
     borderRadius: 14,
@@ -292,6 +232,66 @@ const styles = StyleSheet.create({
     color: colors.bg,
     fontSize: 16,
     fontWeight: 'bold',
+  },
+
+  // Center overlay on top of strings
+  centerOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 10,
+  },
+  promptText: {
+    ...typography.body,
+    color: colors.textSecondary,
+    marginBottom: spacing.xl,
+  },
+  listenButton: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: colors.teal,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: colors.teal,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.6,
+    shadowRadius: 16,
+    elevation: 10,
+  },
+  listenIcon: {
+    fontSize: 22,
+    color: colors.textPrimary,
+  },
+  listenLabel: {
+    ...typography.caption,
+    color: colors.textSecondary,
+    marginTop: spacing.md,
+  },
+  playingText: {
+    ...typography.subtitle,
+    color: colors.tealLight,
+  },
+  feedbackText: {
+    ...typography.title,
+    fontWeight: 'bold',
+    backgroundColor: 'rgba(18, 18, 18, 0.85)',
+    paddingHorizontal: spacing.xl,
+    paddingVertical: spacing.sm,
+    borderRadius: 12,
+    overflow: 'hidden',
+  },
+  feedbackContainer: {
+    alignItems: 'center',
+    gap: spacing.sm,
+    backgroundColor: 'rgba(18, 18, 18, 0.85)',
+    paddingHorizontal: spacing['2xl'],
+    paddingVertical: spacing.lg,
+    borderRadius: 16,
+  },
+  correctAnswer: {
+    ...typography.body,
+    color: colors.textSecondary,
   },
   footer: {
     alignItems: 'center',

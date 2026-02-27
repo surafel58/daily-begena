@@ -71,9 +71,9 @@ function StepCard({
   const opacity = useSharedValue(0);
 
   useEffect(() => {
-    const delay = index * 150;
-    translateY.value = withDelay(delay, withSpring(0, { damping: 15 }));
-    opacity.value = withDelay(delay, withTiming(1, { duration: 400 }));
+    const delay = index * 80;
+    translateY.value = withDelay(delay, withSpring(0, { damping: 18 }));
+    opacity.value = withDelay(delay, withTiming(1, { duration: 250 }));
   }, []);
 
   const animatedStyle = useAnimatedStyle(() => ({
@@ -99,7 +99,7 @@ export default function SessionOverviewScreen() {
   const buttonOpacity = useSharedValue(0);
 
   useEffect(() => {
-    buttonOpacity.value = withDelay(600, withTiming(1, { duration: 400 }));
+    buttonOpacity.value = withDelay(300, withTiming(1, { duration: 250 }));
   }, []);
 
   const buttonAnimatedStyle = useAnimatedStyle(() => ({
